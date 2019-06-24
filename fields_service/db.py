@@ -1,18 +1,12 @@
+"""Connects to database"""
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from . import APP
+from fields_service.config.dev_config import DevelopmentConfig
+from fields_service import APP
 
 
-class Configuration:  # pylint: disable=too-few-public-methods
-    """
-    Implementation of Configuration class.
-    """
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
-
-
-APP.config.from_object(Configuration)
+APP.config.from_object(DevelopmentConfig)
 DB = SQLAlchemy(APP)
 
 
-migrate = Migrate(APP, DB)
+migrate = Migrate(APP, DB)  # pylint: disable=invalid-name
