@@ -1,6 +1,7 @@
 """Creates resources"""
 from flask_restful import Resource
 from flask import request, Response
+from sqlalchemy.exc import IntegrityError
 from fields_service.models.field import Field
 from fields_service.models.choice import Choice
 from fields_service.serializers.field_schema import FieldSchema
@@ -15,8 +16,11 @@ class FieldAPI(Resource):
         """Get route
         :param field_id: int: id of requested field
         :return json"""
-        field = Field.query.get(field_id)
-        if field is None:
+        try:
+            field = Field.query.get(field_id)
+        except IntegrityError:
+            return {"message": "DB connection failed"}, 500
+        if not field:
             return {"message": "Field does not exists"}, 400
         if field.has_choice:
             choices = Choice.query.filter_by(field_id=field.id).all()
@@ -29,14 +33,20 @@ class FieldAPI(Resource):
         :param field_id: int: id of requested field
         :return: int: status
         """
-        field = Field.query.get(field_id)
-        if field is None:
+        try:
+            field = Field.query.get(field_id)
+        except IntegrityError:
+            return {"message": "DB connection failed"}, 500
+        if not field:
             return {"message": "Field does not exists"}, 400
         for attribute in self.attrs:
             setattr(field, attribute, request.json[attribute])
         if field.has_choice:
             choices = request.json['choices']
-            to_change = Choice.query.filter_by(field_id=field.id).all()
+            try:
+                to_change = Choice.query.filter_by(field_id=field.id).all()
+            except IntegrityError:
+                return {"message": "DB connection failed"}, 500
             for choice, change in zip(choices, to_change):
                 setattr(change, 'title', choice['title'])
         DB.session.commit()
@@ -47,11 +57,17 @@ class FieldAPI(Resource):
         :param field_id: int: id of requested field
         :return: int: status
         """
-        field = Field.query.get(field_id)
+        try:
+            field = Field.query.get(field_id)
+        except IntegrityError:
+            return {"message": "DB connection failed"}, 500
         if field is None:
             return {"message": "Field does not exists"}, 400
         if field.has_choice:
-            choices = Choice.query.filter_by(field_id=field.id).all()
+            try:
+                choices = Choice.query.filter_by(field_id=field.id).all()
+            except IntegrityError:
+                return {"message": "DB connection failed"}, 500
             for choice in choices:
                 DB.session.delete(choice)
         DB.session.delete(field)
@@ -68,12 +84,18 @@ class PostAPI(Resource):
         :return: int: status"""
         fields = {attribute: request.json[attribute] for attribute in self.attrs}
         field = Field(**fields)
-        check = Field.query.filter_by(**fields).first()
+        try:
+            check = Field.query.filter_by(**fields).first()
+        except IntegrityError:
+            return {"message": "DB connection failed"}, 500
         if check:
             return {"message": "Field already exists"}, 400
         DB.session.add(field)
         DB.session.commit()
-        field = Field.query.filter_by(**fields).first()
+        try:
+            field = Field.query.filter_by(**fields).first()
+        except IntegrityError:
+            return {"message": "DB connection failed"}, 500
         if field.has_choice:
             choices = request.json['choices']
             for choice in choices:
@@ -87,6 +109,9 @@ class PostAPI(Resource):
         fields_id = request.json['fields']
         titles = {}
         for f_id in fields_id:
-            field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
+            try:
+                field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
+            except IntegrityError:
+                return {"message": "DB connection failed"}, 500
             titles[f_id] = field_title.title
         return titles
