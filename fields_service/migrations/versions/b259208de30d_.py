@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 7d39aa5adc7d
-Revises: 689c2960cd76
-Create Date: 2019-06-28 11:41:42.118674
+Revision ID: b259208de30d
+Revises: 
+Create Date: 2019-07-06 12:53:59.447439
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7d39aa5adc7d'
-down_revision = '689c2960cd76'
+revision = 'b259208de30d'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -22,7 +22,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(length=200), nullable=False),
     sa.Column('field_id', sa.Integer(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('title', 'field_id')
     )
     op.create_table('field',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -30,7 +31,8 @@ def upgrade():
     sa.Column('has_choice', sa.Boolean(), nullable=True),
     sa.Column('is_multichoice', sa.Boolean(), nullable=True),
     sa.Column('has_autocomplete', sa.Boolean(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('title', 'has_choice', 'is_multichoice', 'has_autocomplete')
     )
     # ### end Alembic commands ###
 

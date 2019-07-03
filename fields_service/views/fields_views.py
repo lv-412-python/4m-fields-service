@@ -1,120 +1,124 @@
-"""Creates resources"""
-from flask_restful import Resource
+"""Creates resources."""
 from flask import request, Response
-from sqlalchemy.exc import DataError, OperationalError
-from fields_service.models.field import Field
-from fields_service.models.choice import Choice
-from fields_service.serializers.field_schema import FieldSchema
+from flask_restful import Resource
+from marshmallow import ValidationError
+from sqlalchemy.exc import DataError, IntegrityError
+
 from fields_service.db import DB
+from fields_service.models.choice import Choice
+from fields_service.models.field import Field
+from fields_service.serializers.field_schema import FieldSchema
 
 
-class FieldAPI(Resource):
-    """Resources class"""
-    attrs = ['title', 'has_choice', 'is_multichoice', 'has_autocomplete']
+OK = 200
+BAD_REQUEST = 400
+NOT_FOUND = 404
 
-    def get(self, field_id):  # pylint:disable=no-self-use
-        """Get route
-        :param field_id: int: id of requested field
-        :return json"""
+
+class FieldResource(Resource):
+    """Resources class."""
+    def get(self, field_id):
+        """Get route.
+        :param field_id: int: id of requested field.
+        :return json."""
         try:
             field = Field.query.get(field_id)
         except DataError:
-            return {"message": "Wrong input data"}, 400
-        if not field:
-            return {"message": "Field does not exists"}, 400
+            return {"error": "Invalid url."}, NOT_FOUND
+        if field is None:
+            return {"error": "Does not exist."}, BAD_REQUEST
         if field.has_choice:
             choices = Choice.query.filter_by(field_id=field.id).all()
             field.choices = choices
         field = FieldSchema().dump(obj=field).data
-        return field, 200
+        return field, OK
 
     def put(self, field_id):
-        """put route
-        :param field_id: int: id of requested field
-        :return: int: status
+        """put route.
+        :param field_id: int: id of requested field.
+        :return: int: status.
         """
         try:
             field = Field.query.get(field_id)
         except DataError:
-            return {"message": "Wrong input data"}, 400
+            return {"error": "Invalid url."}, NOT_FOUND
         if not field:
-            return {"message": "Field does not exists"}, 400
-        for attribute in self.attrs:
-            setattr(field, attribute, request.json[attribute])
+            return {"error": "Does not exist."}, BAD_REQUEST
+        try:
+            data = FieldSchema().load(request.json).data
+        except ValidationError as err:
+            return err.messages, BAD_REQUEST
+        choices = data.pop('choices', None)
+        for key, value in data.items():
+            setattr(field, key, value)
         if field.has_choice:
-            choices = request.json['choices']
             to_change = Choice.query.filter_by(field_id=field.id).all()
             for choice, change in zip(choices, to_change):
-                setattr(change, 'title', choice['title'])
+                change.title = choice['title']
         try:
             DB.session.commit()
-        except OperationalError:
-            return {"message": "DB connection failed"}, 500
-        return Response(status=200)
+        except IntegrityError:
+            return {"Error": "Already exists."}, BAD_REQUEST
+        return Response(status=OK)
 
-    def delete(self, field_id):  # pylint:disable=no-self-use
-        """delete route
-        :param field_id: int: id of requested field
-        :return: int: status
+    def delete(self, field_id):
+        """delete route.
+        :param field_id: int: id of requested field.
+        :return: int: status.
         """
         try:
             field = Field.query.get(field_id)
         except DataError:
-            return {"message": "Wrong input data"}, 400
+            return {"error": "Invalid url."}, NOT_FOUND
         if field is None:
-            return {"message": "Field does not exists"}, 400
+            return {"error": "Does not exist."}, BAD_REQUEST
         if field.has_choice:
             choices = Choice.query.filter_by(field_id=field.id).all()
             for choice in choices:
                 DB.session.delete(choice)
         DB.session.delete(field)
-        try:
-            DB.session.commit()
-        except OperationalError:
-            return {"message": "DB connection failed"}, 500
-        return Response(status=200)
+        DB.session.commit()
+        return Response(status=OK)
 
 
-class PostAPI(Resource):
-    """Resources class"""
-    attrs = ['title', 'has_choice', 'is_multichoice', 'has_autocomplete']
+class PostResource(Resource):
+    """Resources class."""
 
     def post(self):
-        """post route
-        :return: int: status"""
-        fields = {attribute: request.json[attribute] for attribute in self.attrs}
+        """post route.
+        :return: int: status."""
+
         try:
-            field = Field(**fields)
-            check = Field.query.filter_by(**fields).first()
-        except DataError:
-            return {"message": "Wrong input data"}, 400
-        if check:
-            return {"message": "Field already exists"}, 400
+            data = FieldSchema().load(request.json).data
+        except ValidationError as err:
+            return err.messages, BAD_REQUEST
+        choices = data.pop('choices', None)
+        field = Field(**data)
         DB.session.add(field)
-        try:
-            DB.session.commit()
-        except OperationalError:
-            return {"message": "DB connection failed"}, 500
-        field = Field.query.filter_by(**fields).first()
-        if field.has_choice:
-            choices = request.json['choices']
+        DB.session.commit()
+        if data['has_choice']:
+            field = Field.query.filter_by(**data).order_by(Field.id.desc()).first()
             for choice in choices:
                 choice = Choice(title=choice['title'], field_id=field.id)
                 DB.session.add(choice)
         try:
             DB.session.commit()
-        except OperationalError:
-            return {"message": "DB connection failed"}, 500
-        return Response(status=200)
+        except IntegrityError:
+            DB.session.remove()
+            DB.session.delete(field)
+            DB.session.commit()
+            DB.session.rollback()
+            return {"error": "Already exists."}, BAD_REQUEST
+        return Response(status=OK)
 
-    def get(self):  # pylint:disable=no-self-use
-        """Get route"""
+    def get(self):
+        """Get route."""
         fields_id = request.json['fields']
         titles = {}
         for f_id in fields_id:
             try:
                 field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
             except DataError:
-                return {"message": "Wrong input data"}, 400
+                return {"message": "Wrong input data"}, BAD_REQUEST
             titles[f_id] = field_title.title
         return titles
