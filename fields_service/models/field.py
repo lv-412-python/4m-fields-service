@@ -11,9 +11,3 @@ class Field(DB.Model):  # pylint: disable=too-few-public-methods
     has_choice = Column(Boolean, default=False)
     is_multichoice = Column(Boolean, default=False)
     has_autocomplete = Column(Boolean, default=False)
-
-    def __repr__(self):
-        return 'Field(id={}, title={}, has_choice={}, is_multichoice={}, ' \
-               'has_autocomplete={})'.format(self.id, self.title,
-                                             self.has_choice, self.is_multichoice,
-                                             self.has_autocomplete)

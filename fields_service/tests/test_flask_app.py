@@ -148,5 +148,36 @@ class PostTest(TestCase):
         DB.drop_all()
 
 
+class GetTitlesTest(TestCase):
+
+    """Tests for post resource"""
+
+    def create_app(self):
+        """:returns flask app"""
+        return create_app(TestingConfig)
+
+    def setUp(self):
+        """Creates tables"""
+        DB.create_all()
+        field1 = Field(has_autocomplete=True, has_choice=False,
+                      title="edu", is_multichoice=True)
+        field2 = Field(has_autocomplete=True, has_choice=False,
+                       title="name", is_multichoice=True)
+        DB.session.add(field1)
+        DB.session.add(field2)
+        DB.session.commit()
+
+    def test_get(self):
+        with self.create_app().test_client() as client:
+            response = client.get('/api/v1/field', json={"fields": [1, 2]})
+            check = {"1": "edu", "2": "name"}
+            self.assertEqual(response.json, check)
+
+    def tearDown(self):
+        """Drops all tables"""
+        DB.session.remove()
+        DB.drop_all()
+
+
 if __name__ == '__main__':
     main()
