@@ -1,6 +1,6 @@
-.PHONY: help install clear lint run-dev run-prod
+.PHONY: help install clear lint dev-env prod-env
 #SHELL := /bin/bash
-PYTHON_PATH_answers_service := /home/olha/repos/4m-fields-service/fields_service
+PYTHON_PATH_field_service := /home/olha/repos/4m-fields-service/fields_service
 .DEFAULT: help
 help:
 	@echo "make install"
@@ -27,7 +27,7 @@ clear:
 
 dev-env:
 	 make install; \
-	 export PYTHONPATH=$(PYTHON_PATH_answers_service);\
+	 export PYTHONPATH=$(PYTHON_PATH_fields_service);\
 	 export FLASK_APP="setup.py"; \
 	 export FLASK_ENV="development"; \
 	 flask run --port=5053;
@@ -35,11 +35,10 @@ dev-env:
 
 prod-env:
 	 make install; \
-	 export PYTHONPATH=$(PYTHON_PATH_answers_service); \
+	 export PYTHONPATH=$(PYTHON_PATH_fields_service); \
 	 export FLASK_APP="setup.py"; \
 	 export FLASK_ENV="production"; \
 	 flask run --port=5053;
 
 lint:
-	pylint setup.py
-	pylint fields_service/
+	pylint setup.py fields_service/

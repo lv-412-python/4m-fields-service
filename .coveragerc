@@ -1,0 +1,19 @@
+[run]
+branch = True
+include = fields_service/*
+omit =
+    *./venv*
+    *.pyenv*
+    *migrations/*
+    *setup.py*
+    *__init__.py*
+    *tests/*
+    *./FLASK*
+
+
+[report]
+show_missing = True
+precision = 2
+
+[paths]
+source = /home/olha/repos/4m-fields-service/fields_service b

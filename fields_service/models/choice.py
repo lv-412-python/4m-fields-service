@@ -9,6 +9,3 @@ class Choice(DB.Model):  # pylint: disable=too-few-public-methods
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(200), nullable=False)
     field_id = Column(Integer, nullable=False)
-
-    def __repr__(self):
-        return 'Choice(id={}, title={}, field_id={})'.format(self.id, self.title, self.field_id)
