@@ -160,7 +160,7 @@ class GetTitlesTest(TestCase):
         """Creates tables"""
         DB.create_all()
         field1 = Field(has_autocomplete=True, has_choice=False,
-                      title="edu", is_multichoice=True)
+                       title="edu", is_multichoice=True)
         field2 = Field(has_autocomplete=True, has_choice=False,
                        title="name", is_multichoice=True)
         DB.session.add(field1)
@@ -168,6 +168,7 @@ class GetTitlesTest(TestCase):
         DB.session.commit()
 
     def test_get(self):
+        """Tests PostAPI get method"""
         with self.create_app().test_client() as client:
             response = client.get('/api/v1/field', json={"fields": [1, 2]})
             check = {"1": "edu", "2": "name"}

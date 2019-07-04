@@ -1,7 +1,7 @@
 """Creates resources"""
 from flask_restful import Resource
 from flask import request, Response
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, OperationalError
 from fields_service.models.field import Field
 from fields_service.models.choice import Choice
 from fields_service.serializers.field_schema import FieldSchema
@@ -18,8 +18,8 @@ class FieldAPI(Resource):
         :return json"""
         try:
             field = Field.query.get(field_id)
-        except IntegrityError:
-            return {"message": "DB connection failed"}, 500
+        except DataError:
+            return {"message": "Wrong input data"}, 400
         if not field:
             return {"message": "Field does not exists"}, 400
         if field.has_choice:
@@ -35,21 +35,21 @@ class FieldAPI(Resource):
         """
         try:
             field = Field.query.get(field_id)
-        except IntegrityError:
-            return {"message": "DB connection failed"}, 500
+        except DataError:
+            return {"message": "Wrong input data"}, 400
         if not field:
             return {"message": "Field does not exists"}, 400
         for attribute in self.attrs:
             setattr(field, attribute, request.json[attribute])
         if field.has_choice:
             choices = request.json['choices']
-            try:
-                to_change = Choice.query.filter_by(field_id=field.id).all()
-            except IntegrityError:
-                return {"message": "DB connection failed"}, 500
+            to_change = Choice.query.filter_by(field_id=field.id).all()
             for choice, change in zip(choices, to_change):
                 setattr(change, 'title', choice['title'])
-        DB.session.commit()
+        try:
+            DB.session.commit()
+        except OperationalError:
+            return {"message": "DB connection failed"}, 500
         return Response(status=200)
 
     def delete(self, field_id):  # pylint:disable=no-self-use
@@ -59,19 +59,19 @@ class FieldAPI(Resource):
         """
         try:
             field = Field.query.get(field_id)
-        except IntegrityError:
-            return {"message": "DB connection failed"}, 500
+        except DataError:
+            return {"message": "Wrong input data"}, 400
         if field is None:
             return {"message": "Field does not exists"}, 400
         if field.has_choice:
-            try:
-                choices = Choice.query.filter_by(field_id=field.id).all()
-            except IntegrityError:
-                return {"message": "DB connection failed"}, 500
+            choices = Choice.query.filter_by(field_id=field.id).all()
             for choice in choices:
                 DB.session.delete(choice)
         DB.session.delete(field)
-        DB.session.commit()
+        try:
+            DB.session.commit()
+        except OperationalError:
+            return {"message": "DB connection failed"}, 500
         return Response(status=200)
 
 
@@ -83,25 +83,28 @@ class PostAPI(Resource):
         """post route
         :return: int: status"""
         fields = {attribute: request.json[attribute] for attribute in self.attrs}
-        field = Field(**fields)
         try:
+            field = Field(**fields)
             check = Field.query.filter_by(**fields).first()
-        except IntegrityError:
-            return {"message": "DB connection failed"}, 500
+        except DataError:
+            return {"message": "Wrong input data"}, 400
         if check:
             return {"message": "Field already exists"}, 400
         DB.session.add(field)
-        DB.session.commit()
         try:
-            field = Field.query.filter_by(**fields).first()
-        except IntegrityError:
+            DB.session.commit()
+        except OperationalError:
             return {"message": "DB connection failed"}, 500
+        field = Field.query.filter_by(**fields).first()
         if field.has_choice:
             choices = request.json['choices']
             for choice in choices:
                 choice = Choice(title=choice['title'], field_id=field.id)
                 DB.session.add(choice)
-        DB.session.commit()
+        try:
+            DB.session.commit()
+        except OperationalError:
+            return {"message": "DB connection failed"}, 500
         return Response(status=200)
 
     def get(self):  # pylint:disable=no-self-use
@@ -111,7 +114,7 @@ class PostAPI(Resource):
         for f_id in fields_id:
             try:
                 field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
-            except IntegrityError:
-                return {"message": "DB connection failed"}, 500
+            except DataError:
+                return {"message": "Wrong input data"}, 400
             titles[f_id] = field_title.title
         return titles
