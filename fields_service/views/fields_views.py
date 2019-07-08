@@ -18,17 +18,25 @@ class FieldResource(Resource):
         :param field_id: int: id of requested field.
         :return json."""
         if not field_id:
+            data = []
             fields_id = request.json['fields']
             titles = {}
             for f_id in fields_id:
                 try:
                     field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
                 except DataError:
-                    return {"error": "Wrong input data"}, status.HTTP_400_BAD_REQUEST
+                    data.append({"error": "Wrong input data"})
+                    data.append(status.HTTP_400_BAD_REQUEST)
+                    break
                 if not field_title:
-                    return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
+                    data.append({"error": "Does not exist."})
+                    data.append(status.HTTP_400_BAD_REQUEST)
+                    break
                 titles[f_id] = field_title.title
-            return titles
+            else:
+                data.append(titles)
+                data.append(status.HTTP_200_OK)
+            return data[0], data[1]
 
         try:
             field = Field.query.get(field_id)
