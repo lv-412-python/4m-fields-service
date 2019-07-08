@@ -11,5 +11,4 @@ from fields_service.views import fields_views  # pylint: disable=wrong-import-po
 
 
 API = Api(APP)
-API.add_resource(fields_views.FieldResource, '/field/<field_id>')
-API.add_resource(fields_views.PostResource, '/field')
+API.add_resource(fields_views.FieldResource, '/field', '/field/<field_id>')
