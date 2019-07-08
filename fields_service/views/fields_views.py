@@ -114,7 +114,7 @@ class FieldResource(Resource):
             for choice in choices:
                 choice = Choice(title=choice['title'], field_id=field.id)
                 DB.session.add(choice)
-        try:
+        try: 
             DB.session.commit()
         except IntegrityError:
             DB.session.remove()
