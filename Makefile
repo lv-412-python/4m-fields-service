@@ -1,6 +1,6 @@
 .PHONY: help install clear lint dev-env prod-env
 #SHELL := /bin/bash
-PYTHON_PATH_field_service := /home/olha/repos/4m-fields-service/fields_service
+PYTHON_PATH_field_service := /home/olha/repos/fields-service-repo/fields_service
 .DEFAULT: help
 help:
 	@echo "make install"
@@ -16,7 +16,7 @@ help:
 
 install:
 	python3 -m venv venv
-	. /home/olha/repos/4m-fields-service/venv/bin/activate; \
+	. /home/olha/repos/fields-service-repo/venv/bin/activate; \
 	pip install setuptools --upgrade --ignore-installed --user
 	pip install pip --upgrade --ignore-installed --user
 	pip install -r requirements.txt --user;
