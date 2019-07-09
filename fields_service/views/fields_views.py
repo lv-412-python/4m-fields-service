@@ -5,6 +5,7 @@ from flask_restful import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import DataError, IntegrityError
 
+from fields_service import APP
 from fields_service.db import DB
 from fields_service.models.choice import Choice
 from fields_service.models.field import Field
@@ -21,14 +22,9 @@ class FieldResource(Resource):
             fields_id = request.args.getlist('field_id', type=int)
             titles = {}
             for f_id in fields_id:
-                try:
-                    field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
-                except DataError:
-                    message = {"error": "Invalid url"}
-                    resp = jsonify(message)
-                    resp.status_code = status.HTTP_400_BAD_REQUEST
-                    break
+                field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
                 if not field_title:
+                    APP.logger.error('Field with id %s does not exist', f_id)
                     message = {"error": "Does not exist."}
                     resp = jsonify(message)
                     resp.status_code = status.HTTP_400_BAD_REQUEST
@@ -41,9 +37,11 @@ class FieldResource(Resource):
 
         try:
             field = Field.query.get(field_id)
-        except DataError:
+        except DataError as err:
+            APP.logger.error(err.args)
             return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
         if field is None:
+            APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
         if field.has_choice:
             choices = Choice.query.filter_by(field_id=field.id).all()
@@ -58,13 +56,16 @@ class FieldResource(Resource):
         """
         try:
             field = Field.query.get(field_id)
-        except DataError:
+        except DataError as err:
+            APP.logger.error(err.args)
             return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
         if not field:
+            APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
         try:
             data = FieldSchema().load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
         choices = data.pop('choices', None)
         for key, value in data.items():
@@ -75,7 +76,8 @@ class FieldResource(Resource):
                 change.title = choice['title']
         try:
             DB.session.commit()
-        except IntegrityError:
+        except IntegrityError as err:
+            APP.logger.error(err.args)
             return {"Error": "Already exists."}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_200_OK)
 
@@ -86,9 +88,11 @@ class FieldResource(Resource):
         """
         try:
             field = Field.query.get(field_id)
-        except DataError:
+        except DataError as err:
+            APP.logger.error(err.args)
             return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
         if field is None:
+            APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
         if field.has_choice:
             choices = Choice.query.filter_by(field_id=field.id).all()
@@ -104,6 +108,7 @@ class FieldResource(Resource):
         try:
             data = FieldSchema().load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
         choices = data.pop('choices', None)
         field = Field(**data)
@@ -115,7 +120,8 @@ class FieldResource(Resource):
                 DB.session.add(choice)
         try:
             DB.session.commit()
-        except IntegrityError:
+        except IntegrityError as err:
+            APP.logger.error(err.args)
             DB.session.remove()
             DB.session.delete(field)
             DB.session.commit()
