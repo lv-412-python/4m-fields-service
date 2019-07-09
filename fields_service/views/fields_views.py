@@ -110,7 +110,6 @@ class FieldResource(Resource):
         DB.session.add(field)
         DB.session.commit()
         if data['has_choice']:
-            field = Field.query.filter_by(**data).order_by(Field.id.desc()).first()
             for choice in choices:
                 choice = Choice(title=choice['title'], field_id=field.id)
                 DB.session.add(choice)
