@@ -10,5 +10,5 @@ APP = Flask(__name__)
 from fields_service.views import fields_views  # pylint: disable=wrong-import-position
 
 
-API = Api(APP)
+API = Api(APP, catch_all_404s=True)
 API.add_resource(fields_views.FieldResource, '/field', '/field/<field_id>')

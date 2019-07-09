@@ -161,7 +161,7 @@ class GetTitlesTest(TestCase):
     def test_get(self):
         """Tests PostAPI get method."""
         with self.create_app().test_client() as client:
-            response = client.get('/field', json={"fields": [1, 2]})
+            response = client.get('/field?field_id=1&field_id=2',)
             check = {"1": "edu", "2": "name"}
             self.assertEqual(response.json, check)
 

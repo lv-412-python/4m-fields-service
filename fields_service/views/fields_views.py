@@ -18,7 +18,7 @@ class FieldResource(Resource):
         :param field_id: int: id of requested field.
         :return json."""
         if not field_id:
-            fields_id = request.json['fields']
+            fields_id = request.args.getlist('field_id', type=int)
             titles = {}
             for f_id in fields_id:
                 try:
@@ -51,7 +51,7 @@ class FieldResource(Resource):
         field = FieldSchema().dump(obj=field).data
         return field, status.HTTP_200_OK
 
-    def put(self, field_id=None):
+    def put(self, field_id):
         """put route.
         :param field_id: int: id of requested field.
         :return: int: status.
@@ -79,7 +79,7 @@ class FieldResource(Resource):
             return {"Error": "Already exists."}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_200_OK)
 
-    def delete(self, field_id=None):
+    def delete(self, field_id):
         """delete route.
         :param field_id: int: id of requested field.
         :return: int: status.
@@ -101,7 +101,6 @@ class FieldResource(Resource):
     def post(self):
         """post route.
         :return: int: status."""
-
         try:
             data = FieldSchema().load(request.json).data
         except ValidationError as err:
