@@ -1,44 +1,46 @@
-.PHONY: help install clear lint dev-env prod-env
-PYTHON_PATH_FIELDS_SERVICE :=  fields_service
+.PHONY: help install lint run-dev run-prod run-test
+PYTHON_PATH_FIELDS_SERVICE := fields-service-repo
 .DEFAULT: help
 help:
 	@echo "make install"
-	@echo "       creates venv and installs requirements"
-	@echo "make dev-env"
+	@echo "       installs requirements"
+	@echo "make run-dev"
 	@echo "       run project in dev mode"
-	@echo "make prod-env"
+	@echo "make run-prod"
 	@echo "       run project in production mode"
+	@echo "make run-test"
+	@echo "       run project in testing mode"
 	@echo "make lint"
 	@echo "       run pylint"
-	@echo "make clear"
-	@echo "       deletes venv and .pyc files"
 
 install:
-	python3 -m venv venv
-	. venv/bin/activate; \
-	pip install setuptools --upgrade; \
-	pip install pip --upgrade; \
-	pip install -r requirements.txt;
+	 pip3 install -r requirements.txt;
 
-clear:
-	rm -rf venv
-	find -iname "*.pyc" -delete
-
-dev-env:
-	 . venv/bin/activate; \
-	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
-	 export FLASK_APP="setup.py"; \
+run-dev:
+	 export LC_ALL=C.UTF-8;\
+	 export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE);\
 	 export FLASK_ENV="development"; \
-	 flask run --port=5000;
-
-
-prod-env:
-	 . venv/bin/activate; \
-	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
 	 export FLASK_APP="setup.py"; \
+	 python3 -m flask run -p 5053;
+
+
+run-prod:
+	 export LC_ALL=C.UTF-8;\
+     export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
 	 export FLASK_ENV="production"; \
-	 flask run --port=5000;
+	 export FLASK_APP="setup.py"; \
+	 flask run --port=5053;
+
+
+run-test:
+	 export LC_ALL=C.UTF-8;\
+	 export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
+	 export FLASK_ENV="testing"; \
+	 export FLASK_APP="setup.py"; \
+	 flask run --port=5053;
 
 lint:
-	. venv/bin/activate; \
-	pylint setup.py fields_service/
+	 pylint setup.py fields_service/
