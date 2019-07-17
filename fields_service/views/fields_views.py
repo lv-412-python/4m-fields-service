@@ -1,9 +1,10 @@
 """Creates resources."""
 from flask import request, Response, jsonify
 from flask_api import status
-from flask_restful import Resource
-from marshmallow import ValidationError
+from flask_restful import Resource, HTTPException
+from marshmallow import ValidationError, fields
 from sqlalchemy.exc import DataError, IntegrityError
+from webargs.flaskparser import parser
 
 from fields_service import APP
 from fields_service.db import DB
@@ -19,9 +20,13 @@ class FieldResource(Resource):
         :param field_id: int: id of requested field.
         :return json."""
         if not field_id:
-            fields_id = request.args.getlist('field_id', type=int)
+            field_id = {'field_id': fields.List(fields.Int(validate=lambda val: val > 0))}
+            try:
+                fields_id = parser.parse(field_id, request)
+            except HTTPException:
+                return {"error": "Invalid url"}, status.HTTP_400_BAD_REQUEST
             titles = {}
-            for f_id in fields_id:
+            for f_id in fields_id['field_id']:
                 field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
                 if not field_title:
                     APP.logger.error('Field with id %s does not exist', f_id)

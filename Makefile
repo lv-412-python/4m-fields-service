@@ -1,44 +1,46 @@
-.PHONY: help install clear lint dev-env prod-env
-#SHELL := /bin/bash
-PYTHON_PATH_field_service := /home/olha/repos/4m-fields-service/fields_service
+.PHONY: help install lint run-dev run-prod run-test
+PYTHON_PATH_FIELDS_SERVICE := fields-service-repo
 .DEFAULT: help
 help:
 	@echo "make install"
-	@echo "       creates venv and installs requirements"
+	@echo "       installs requirements"
 	@echo "make run-dev"
 	@echo "       run project in dev mode"
 	@echo "make run-prod"
 	@echo "       run project in production mode"
+	@echo "make run-test"
+	@echo "       run project in testing mode"
 	@echo "make lint"
 	@echo "       run pylint"
-	@echo "make clear"
-	@echo "       deletes venv and .pyc files"
 
 install:
-	python3 -m venv venv
-	. /home/olha/repos/4m-fields-service/venv/bin/activate; \
-	pip install setuptools --upgrade --ignore-installed --user
-	pip install pip --upgrade --ignore-installed --user
-	pip install -r requirements.txt --user;
+	 pip3 install -r requirements.txt;
 
-clear:
-	rm -rf venv
-	find -iname "*.pyc" -delete
-
-dev-env:
-	 make install; \
-	 export PYTHONPATH=$(PYTHON_PATH_fields_service);\
-	 export FLASK_APP="setup.py"; \
+run-dev:
+	 export LC_ALL=C.UTF-8;\
+	 export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE);\
 	 export FLASK_ENV="development"; \
+	 export FLASK_APP="setup.py"; \
+	 python3 -m flask run -p 5053;
+
+
+run-prod:
+	 export LC_ALL=C.UTF-8;\
+     export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
+	 export FLASK_ENV="production"; \
+	 export FLASK_APP="setup.py"; \
 	 flask run --port=5053;
 
 
-prod-env:
-	 make install; \
-	 export PYTHONPATH=$(PYTHON_PATH_fields_service); \
+run-test:
+	 export LC_ALL=C.UTF-8;\
+	 export LANG=C.UTF-8;\
+	 export PYTHONPATH=$(PYTHON_PATH_FIELDS_SERVICE); \
+	 export FLASK_ENV="testing"; \
 	 export FLASK_APP="setup.py"; \
-	 export FLASK_ENV="production"; \
 	 flask run --port=5053;
 
 lint:
-	pylint setup.py fields_service/
+	 pylint setup.py fields_service/
