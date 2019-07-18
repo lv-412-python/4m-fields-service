@@ -44,7 +44,7 @@ class FieldResource(Resource):
             field = Field.query.get(field_id)
         except DataError as err:
             APP.logger.error(err.args)
-            return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
+            return {"error": "Invalid url."}, status.HTTP_400_BAD_REQUEST
         if field is None:
             APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
@@ -63,7 +63,7 @@ class FieldResource(Resource):
             field = Field.query.get(field_id)
         except DataError as err:
             APP.logger.error(err.args)
-            return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
+            return {"error": "Invalid url."}, status.HTTP_400_BAD_REQUEST
         if not field:
             APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
@@ -95,7 +95,7 @@ class FieldResource(Resource):
             field = Field.query.get(field_id)
         except DataError as err:
             APP.logger.error(err.args)
-            return {"error": "Invalid url."}, status.HTTP_404_NOT_FOUND
+            return {"error": "Invalid url."}, status.HTTP_400_BAD_REQUEST
         if field is None:
             APP.logger.error('Field with id %s does not exist', field_id)
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST

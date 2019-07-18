@@ -2,13 +2,11 @@
 # pylint: disable = cyclic-import
 from flask import Flask
 from flask_restful import Api
+from flask_cors import CORS
 
 
 APP = Flask(__name__)
-
-
-from fields_service.views import fields_views  # pylint: disable=wrong-import-position
-
-
 API = Api(APP, catch_all_404s=True)
-API.add_resource(fields_views.FieldResource, '/field', '/field/<field_id>')
+CORS(APP)
+
+from fields_service.views import resources  # pylint: disable=wrong-import-position
