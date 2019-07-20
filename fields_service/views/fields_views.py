@@ -1,5 +1,5 @@
 """Creates resources."""
-from flask import request, Response, jsonify
+from flask import request, Response
 from flask_api import status
 from flask_restful import Resource, HTTPException
 from marshmallow import ValidationError, fields
@@ -11,6 +11,7 @@ from fields_service.db import DB
 from fields_service.models.choice import Choice
 from fields_service.models.field import Field
 from fields_service.serializers.field_schema import FieldSchema
+from fields_service.serializers.fields_id_schema import TitlesId
 
 
 class FieldResource(Resource):
@@ -25,21 +26,24 @@ class FieldResource(Resource):
                 fields_id = parser.parse(field_id, request)
             except HTTPException:
                 return {"error": "Invalid url"}, status.HTTP_400_BAD_REQUEST
-            titles = {}
+            if not fields_id:
+                all_fields = Field.query.with_entities(Field.id, Field.title).all()
+                data = TitlesId(many=True).dump(obj=all_fields).data
+                return data
+            titles_ids = []
             for f_id in fields_id['field_id']:
-                field_title = Field.query.with_entities(Field.title).filter_by(id=f_id).first()
+                field_title = Field.query.with_entities(Field.title, Field.id).\
+                    filter_by(id=f_id).first()
                 if not field_title:
                     APP.logger.error('Field with id %s does not exist', f_id)
-                    message = {"error": "Does not exist."}
-                    resp = jsonify(message)
-                    resp.status_code = status.HTTP_400_BAD_REQUEST
+                    resp = {"error": "Does not exist."}
+                    status_code = status.HTTP_400_BAD_REQUEST
                     break
-                titles[f_id] = field_title.title
+                titles_ids.append(field_title)
             else:
-                resp = jsonify(titles)
-                resp.status_code = status.HTTP_200_OK
-            return resp
-
+                resp = TitlesId(many=True).dump(obj=titles_ids).data
+                status_code = status.HTTP_200_OK
+            return resp, status_code
         try:
             field = Field.query.get(field_id)
         except DataError as err:
