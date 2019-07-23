@@ -9,6 +9,8 @@ RUN apt update -y && \
 COPY ./ ./opt/fields-service-repo
 WORKDIR /opt/fields-service-repo
 
+EXPOSE 5050
+
 RUN make install
 
 ENTRYPOINT ["python3"]
