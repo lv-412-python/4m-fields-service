@@ -7,4 +7,4 @@ if __name__ == '__main__':
 
     fileConfig('logging.config')
 
-    APP.run(host='0.0.0.0', port=5053)
+    APP.run(host='0.0.0.0', port=5050)
