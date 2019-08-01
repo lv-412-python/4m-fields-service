@@ -12,8 +12,6 @@ class FieldSchema(Schema):
                                 error_messages={"required": "has_choice is required."})
     is_multichoice = fields.Boolean(required=True,
                                     error_messages={"required": "is_multichoice is required."})
-    has_autocomplete = fields.Boolean(required=True,
-                                      error_messages={"required": "has_autocomplete is required."})
     choices = fields.Nested(ChoiceSchema, many=True)
 
     class Meta:

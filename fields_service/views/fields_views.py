@@ -79,6 +79,9 @@ class FieldResource(Resource):
         choices = data.pop('choices', None)
         for key, value in data.items():
             setattr(field, key, value)
+        if not field.has_choice and field.is_multichoice:
+            return {"error": "Field with type 'text' cannot be multichoice."}, \
+                   status.HTTP_400_BAD_REQUEST
         if field.has_choice:
             to_change = Choice.query.filter_by(field_id=field.id).all()
             for choice, change in zip(choices, to_change):
@@ -121,6 +124,9 @@ class FieldResource(Resource):
             return err.messages, status.HTTP_400_BAD_REQUEST
         choices = data.pop('choices', None)
         field = Field(**data)
+        if not field.has_choice and field.is_multichoice:
+            return {"error": "Field with type 'text' cannot be multichoice."}, \
+                   status.HTTP_400_BAD_REQUEST
         DB.session.add(field)
         DB.session.commit()
         if data['has_choice']:

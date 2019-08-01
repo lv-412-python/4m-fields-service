@@ -10,4 +10,3 @@ class Field(DB.Model):
     title = Column(String(100), nullable=False)
     has_choice = Column(Boolean, default=False)
     is_multichoice = Column(Boolean, default=False)
-    has_autocomplete = Column(Boolean, default=False)
