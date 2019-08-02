@@ -7,6 +7,6 @@ from flask_cors import CORS
 
 APP = Flask(__name__)
 API = Api(APP, catch_all_404s=True)
-CORS(APP)
+CORS(APP, supports_credentials=True)
 
 from fields_service.views import resources  # pylint: disable=wrong-import-position
