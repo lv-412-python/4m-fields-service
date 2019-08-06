@@ -21,17 +21,22 @@ class FieldResource(Resource):
         :param field_id: int: id of requested field.
         :return json."""
         if not field_id:
-            field_id = {'field_id': fields.List(fields.Int(validate=lambda val: val > 0))}
+            args = {
+                'field_id': fields.List(fields.Int(validate=lambda val: val > 0)),
+                'owner': fields.List(fields.Int(validate=lambda value: value > 0))
+            }
             try:
-                fields_id = parser.parse(field_id, request)
+                args = parser.parse(args, request)
             except HTTPException:
                 return {"error": "Invalid url"}, status.HTTP_400_BAD_REQUEST
-            if not fields_id:
-                all_fields = Field.query.with_entities(Field.id, Field.title).all()
+            if not args.get('field_id', None):
+                all_fields = Field.query.with_entities(Field.id, Field.title).\
+                    filter(Field.owner.in_(args['owner'])).all()
                 data = TitlesId(many=True).dump(obj=all_fields).data
-                return data
+                return (data, status.HTTP_200_OK) if data else \
+                    ({"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST)
             titles_ids = []
-            for f_id in fields_id['field_id']:
+            for f_id in args['field_id']:
                 field_title = Field.query.with_entities(Field.title, Field.id).\
                     filter_by(id=f_id).first()
                 if not field_title:
