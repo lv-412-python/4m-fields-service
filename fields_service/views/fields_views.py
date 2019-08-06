@@ -37,16 +37,18 @@ class FieldResource(Resource):
                     ({"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST)
             titles_ids = []
             for f_id in args['field_id']:
-                field_title = Field.query.with_entities(Field.title, Field.id).\
-                    filter_by(id=f_id).first()
-                if not field_title:
+                element = Field.query.filter_by(id=f_id).first()
+                if not element:
                     APP.logger.error('Field with id %s does not exist', f_id)
                     resp = {"error": "Does not exist."}
                     status_code = status.HTTP_400_BAD_REQUEST
                     break
-                titles_ids.append(field_title)
+                if element.has_choice:
+                    choices = Choice.query.filter_by(field_id=f_id).all()
+                    element.choices = choices
+                titles_ids.append(element)
             else:
-                resp = TitlesId(many=True).dump(obj=titles_ids).data
+                resp = FieldSchema(many=True).dump(obj=titles_ids).data
                 status_code = status.HTTP_200_OK
             return resp, status_code
         try:
