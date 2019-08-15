@@ -14,8 +14,19 @@ from fields_service.serializers.field_schema import FieldSchema
 from fields_service.serializers.fields_id_schema import TitlesId
 
 
+def check_authority(view):
+    """Decorator for resources"""
+    def func_wrapper(*args, **kwargs):
+        """wrapper"""
+        if request.cookies['admin'] == 'False' and request.method != 'GET':
+            return {"error": "Forbidden."}, status.HTTP_403_FORBIDDEN
+        return view(*args, **kwargs)
+    return func_wrapper
+
+
 class FieldResource(Resource):
     """Resources class."""
+    @check_authority
     def get(self, field_id=None):
         """Get route.
         :param field_id: int: id of requested field.
@@ -65,6 +76,7 @@ class FieldResource(Resource):
         field = FieldSchema().dump(obj=field).data
         return field, status.HTTP_200_OK
 
+    @check_authority
     def put(self, field_id):
         """put route.
         :param field_id: int: id of requested field.
@@ -100,6 +112,7 @@ class FieldResource(Resource):
             return {"Error": "Already exists."}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_200_OK)
 
+    @check_authority
     def delete(self, field_id):
         """delete route.
         :param field_id: int: id of requested field.
@@ -121,6 +134,7 @@ class FieldResource(Resource):
         DB.session.commit()
         return Response(status=status.HTTP_200_OK)
 
+    @check_authority
     def post(self):
         """post route.
         :return: int: status."""
